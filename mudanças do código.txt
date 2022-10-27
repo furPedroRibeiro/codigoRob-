@@ -1,0 +1,159 @@
+MUDANÇAS FEITAS NO CÓDIGO:
+
+--------------------------------------------------------------
+
+VIRAR A ESQUERDA
+
+MÉTODO: RECUAR O MOTOR ESQUERDO E AVANÇAR O DIREITO;
+CONTROLE: DIMINUIÇÃO DA CARGA PARA MELHOR CONTROLE DO ROBÔ.
+
+--------------------------------------------------------------
+
+VIRAR A DIREITA
+
+MÉTODO: RECUAR O MOTOR DIREITO E AVANÇAR O ESQUERDO;
+CONTROLE: DIMINUIÇÃO DA CARGA PARA MELHOR CONTROLE DO ROBÔ.
+
+--------------------------------------------------------------
+
+CONTROLE DA MODULAÇÃO DE CARGA FEITO COM A LINHA:
+
+	Carga para virar a esquerda:
+
+ 	analogWrite(motorDireitoAvançar,191);
+ 	analogWrite(motorEsquerdoRecuar,191);
+	
+	Carga para virar a direita:	
+
+ 	analogWrite(motorDireitoRecuar,191);
+ 	analogWrite(motorEsquerdoAvançar,191);
+
+Observação: não sabemos se o comando de mudar a modulação está 
+correto, mas na teoria é pra ter 75% de carga na hora de virar
+
+Código:
+
+#include <ESP8266WiFi.h> 
+
+/*
+Biblioteca do ESP8266
+ */
+
+/* Porta de acesso do Wifi */
+WiFiClient client;
+WiFiServer server(80);
+
+/* Nome da Rede e senha do Wifi (possivelmente será "MONTIER" e "45087300" */
+const char* ssid = "REDE";
+const char* password = "SENHA";
+
+/* dados recebidos */
+String  data =""; 
+
+/* Pinos das funções do motor */
+int motorEsquerdoAvancar;
+int motorDireitoAvancar;
+int motorEsquerdoRecuar;
+int motorDireitoRecuar;
+
+
+/* Pinos dos motores */
+int motorDireito;
+int motorEsquerdo;
+
+void setup()
+{
+  /* Declaração das ações */
+  pinMode(motorEsquerdoAvançar, OUTPUT);
+  pinMode(motorDireitoAvançar, OUTPUT); 
+  pinMode(motorEsquerdoRecuar, OUTPUT);  
+  pinMode(motorDireitoRecuar, OUTPUT);
+
+  /* Declaração dos motores */
+  pinMode(motorEsquerdo, OUTPUT); 
+  pinMode(motorDireito, OUTPUT);
+
+  /* Inicializando comunicação com o servidor */
+  server.begin();
+}
+
+void loop()
+{
+    /* Verificação se o servidor está disponível */  
+    client = server.available();
+    if (!client) return; 
+    data = checkClient ();
+
+
+    /* Caso o usuário tecle na seta para avançar no aplicativo */
+    if (data == "forward") MotorFrente();
+    /* Caso o usuário tecle na seta de retrocedor no aplicativo */
+    else if (data == "backward") MotorRetroceder();
+    /* Caso o usuário tecle na seta de virar a esquerda no aplicativo */
+    else if (data == "left") VirarEsquerda();
+    /* Caso o usuário tecle na seta de virar a direita no aplicativo */
+    else if (data == "right") VirarDireita();
+    /* Caso o usuário clique no botão "parar" */
+    else if (data == "stop") PararMotor();
+} 
+
+void MotorFrente(void)   
+{
+  digitalWrite(motorEsquerdo,HIGH);
+  digitalWrite(motorDireito,HIGH);
+  digitalWrite(motorEsquerdoAvançar,HIGH);
+  digitalWrite(motorDireitoAvançar,HIGH);
+  digitalWrite(motorEsquerdoRecuar,LOW);
+  digitalWrite(motorDireitoRecuar,LOW);
+}
+
+void MotorRetroceder(void)   
+{
+  digitalWrite(motorEsquerdo,HIGH);
+  digitalWrite(motorDireito,HIGH);
+  digitalWrite(motorEsquerdoAvançar,LOW);
+  digitalWrite(motorDireitoAvançar,LOW);
+  digitalWrite(motorEsquerdoRecuar,HIGH);
+  digitalWrite(motorDireitoRecuar,HIGH);
+}
+
+void VirarEsquerda(void)   
+{
+  analogWrite(191);
+  digitalWrite(motorEsquerdo,HIGH);
+  digitalWrite(motorDireito,HIGH);
+  digitalWrite(motorEsquerdoAvançar,LOW);
+  analogWrite(motorDireitoAvançar,191);
+  analogWrite(motorEsquerdoRecuar,191);
+  digitalWrite(motorDireitoRecuar,LOW);
+}
+
+void VirarDireita(void)   
+{
+
+  digitalWrite(motorEsquerdo,HIGH);
+  digitalWrite(motorDireito,HIGH);
+  analogWrite(motorEsquerdoAvançar,191);
+  digitalWrite(motorDireitoAvançar,LOW);
+  digitalWrite(motorEsquerdoRecuar,LOW);
+  analogWrite(motorDireitoRecuar,191);
+}
+
+void MotorStop(void)   
+{
+  digitalWrite(motorEsquerdo,LOW);
+  digitalWrite(motorDireito,LOW);
+  digitalWrite(motorEsquerdoAvançar,LOW);
+  digitalWrite(motorDireitoAvançar,LOW);
+  digitalWrite(motorEsquerdoRecuar,LOW);
+  digitalWrite(motorDireitoRecuar,LOW);
+}
+
+
+String checkClient (void)
+{
+  while(!client.available()) delay(1); 
+  String request = client.readStringUntil('\r');
+  request.remove(0, 5);
+  request.remove(request.length()-9,9);
+  return request;
